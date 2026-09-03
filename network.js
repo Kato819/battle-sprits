@@ -84,28 +84,38 @@ if (connectBtn) {
     console.error("connect-btn が見つかりません");
 }
 
+// 6. 接続確立後のイベント設定 & ハートビート監視
 function setupConnectionEvents() {
     if (!conn) return;
 
     console.log("コネクション監視をセットアップ中...", conn.peer);
 
-    conn.on("open", () => {
-        console.log("★ P2Pデータ通信路が完全に開通しました！ (open)");
+    // すでに開通済みの場合は即座に接続完了処理を行う
+    const markConnected = () => {
+        console.log("★ P2Pデータ通信路が完全に開通しました！");
         const statusEl = document.getElementById("connection-status");
         if (statusEl) {
             statusEl.textContent = "● 接続中";
             statusEl.style.color = "#4ade80";
         }
 
-        // 15秒ごとの生存確認PING
         clearInterval(heartbeatInterval);
         heartbeatInterval = setInterval(() => {
             if (conn && conn.open) {
                 conn.send({ type: "PING" });
             }
         }, 15000);
-    });
+    };
 
+    if (conn.open) {
+        markConnected();
+    } else {
+        conn.on("open", () => {
+            markConnected();
+        });
+    }
+
+    // 相手からデータを受信したとき
     conn.on("data", (data) => {
         if (data.type === "PING") return;
         console.log("受信データ:", data);
@@ -125,6 +135,17 @@ function setupConnectionEvents() {
     conn.on("error", (err) => {
         console.error("コネクションエラー発生:", err);
     });
+
+    // ブラウザ内部のWebRTC接続状態（ICE）を直接監視してログ出力
+    if (conn.peerConnection) {
+        conn.peerConnection.oniceconnectionstatechange = () => {
+            const state = conn.peerConnection.iceConnectionState;
+            console.log("ICE状態変化:", state);
+            if (state === "connected" || state === "completed") {
+                markConnected();
+            }
+        };
+    }
 }
 
 // 相手にデータを送信する関数
