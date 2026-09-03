@@ -78,4 +78,40 @@ const CARD_DATABASE = {
         cost: 8,
         image: "images/sagitta_flame.png"
     },
+    "bs-14": {
+        name: "magic_boost",
+        type: "spirit",
+        cost: 8,
+        image: "images/magic_boost.png"
+    },
+    "bs-15": {
+        name: "burning_sun",
+        type: "spirit",
+        cost: 8,
+        image: "images/burning_sun.png"
+    },
+    "bs-16": {
+        name: "shine_blazer",
+        type: "spirit",
+        cost: 8,
+        image: "images/shine_blazer.png"
+    },
+    "bs-17": {
+        name: "phoenix_cannon",
+        type: "spirit",
+        cost: 8,
+        image: "images/phoenix_cannon.png"
+    },
+    "bs-18": {
+        name: "delta_barrier",
+        type: "spirit",
+        cost: 8,
+        image: "images/delta_barrier.png"
+    },
+    "bs-19": {
+        name: "cross_frame",
+        type: "spirit",
+        cost: 8,
+        image: "images/cross_frame.png"
+    },
 };
