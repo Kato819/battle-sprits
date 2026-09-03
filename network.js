@@ -1,40 +1,58 @@
 // network.js
 
-// Peer オブジェクトの初期化（無料の公式クラウドシグナリングサーバーを使用）
-const peer = new Peer();
-let conn = null;
+// 1. ランダムな6桁の数字コードを生成
+function generateShortCode() {
+    return Math.floor(100000 + Math.random() * 900000).toString();
+}
 
-// 1. 自分のPeer IDが発行されたときの処理
+// 2. 6桁コードを付与してPeerインスタンスを初期化（他者との重複回避のため接頭辞をつける）
+const myShortCode = generateShortCode();
+const peer = new Peer(`bs-room-${myShortCode}`);
+let conn = null;
+let heartbeatInterval = null;
+
+// 3. ID確定時の処理（画面には6桁の数字のみ表示）
 peer.on("open", (id) => {
-    console.log("My peer ID is: " + id);
+    console.log("My Room Code:", myShortCode);
     const myIdEl = document.getElementById("my-peer-id");
-    if (myIdEl) myIdEl.textContent = id;
+    if (myIdEl) {
+        myIdEl.textContent = myShortCode;
+    }
 });
 
-// 2. 相手から接続されたときの処理（ホスト側）
+// 万が一同じ数字コードが衝突した場合の自動リトライ
+peer.on("error", (err) => {
+    if (err.type === "unavailable-id") {
+        location.reload();
+    } else {
+        console.error("PeerJSエラー:", err);
+    }
+});
+
+// 4. 相手から接続されたときの処理（ホスト側）
 peer.on("connection", (connection) => {
     conn = connection;
     setupConnectionEvents();
 });
 
-// 3. 自分から相手のIDに接続する処理（ゲスト側）
+// 5. 相手の数字6桁を入力して接続する処理（ゲスト側）
 const connectBtn = document.getElementById("connect-btn");
 if (connectBtn) {
     connectBtn.addEventListener("click", () => {
-        const targetId = document.getElementById("target-peer-id").value.trim();
-        if (!targetId) {
-            alert("相手のIDを入力してください");
+        const inputVal = document.getElementById("target-peer-id").value.trim();
+        if (!inputVal || inputVal.length !== 6 || isNaN(inputVal)) {
+            alert("半角数字6桁を入力してください");
             return;
         }
 
-        conn = peer.connect(targetId);
+        // 接頭辞を補完して接続
+        const targetFullId = `bs-room-${inputVal}`;
+        conn = peer.connect(targetFullId);
         setupConnectionEvents();
     });
 }
 
-// 4. 接続が確立した後のイベント設定
-let heartbeatInterval = null;
-
+// 6. 接続確立後のイベント設定 & ハートビート監視
 function setupConnectionEvents() {
     if (!conn) return;
 
@@ -42,11 +60,11 @@ function setupConnectionEvents() {
         const statusEl = document.getElementById("connection-status");
         if (statusEl) {
             statusEl.textContent = "● 接続中";
-            statusEl.style.color = "#4ade80"; // 緑色
+            statusEl.style.color = "#4ade80";
         }
         console.log("P2P接続が確立しました！");
 
-        // ★追加：15秒ごとに生存信号（PING）を送って通信経路を維持する
+        // 15秒ごとに生存信号（PING）を送って通信経路を維持
         clearInterval(heartbeatInterval);
         heartbeatInterval = setInterval(() => {
             if (conn && conn.open) {
@@ -57,17 +75,15 @@ function setupConnectionEvents() {
 
     // 相手からデータを受信したとき
     conn.on("data", (data) => {
-        // ★追加：生存信号（PING）を受信した時は何もしないで無視（裏で通信だけ維持）
-        if (data.type === "PING") {
-            return;
-        }
+        // 生存確認PINGは無視して読み捨てる
+        if (data.type === "PING") return;
 
         console.log("受信したデータ:", data);
         handleIncomingData(data);
     });
 
     conn.on("close", () => {
-        clearInterval(heartbeatInterval); // ★追加：切断時はタイマーを止める
+        clearInterval(heartbeatInterval);
         const statusEl = document.getElementById("connection-status");
         if (statusEl) {
             statusEl.textContent = "× 切断されました";
