@@ -114,4 +114,10 @@ const CARD_DATABASE = {
         cost: 8,
         image: "images/cross_frame.png"
     },
+    "bs-20": {
+        name: "tres_beluga",
+        type: "spirit",
+        cost: 8,
+        image: "images/tres_beluga.png"
+    }
 };
