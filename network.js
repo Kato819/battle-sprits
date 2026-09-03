@@ -5,15 +5,15 @@ function generateShortCode() {
     return Math.floor(100000 + Math.random() * 900000).toString();
 }
 
-// 2. 6桁コードを付与してPeerインスタンスを初期化（他者との重複回避のため接頭辞をつける）
+// 2. 6桁コードを付与してPeerインスタンスを初期化
 const myShortCode = generateShortCode();
 const peer = new Peer(`bs-room-${myShortCode}`);
 let conn = null;
 let heartbeatInterval = null;
 
-// 3. ID確定時の処理（画面には6桁の数字のみ表示）
+// 3. ID確定時の処理（画面に数字6桁を表示）
 peer.on("open", (id) => {
-    console.log("My Room Code:", myShortCode);
+    console.log("Peer準備完了 - あなたの6桁コード:", myShortCode);
     const myIdEl = document.getElementById("my-peer-id");
     if (myIdEl) {
         myIdEl.textContent = myShortCode;
@@ -22,34 +22,48 @@ peer.on("open", (id) => {
 
 // 万が一同じ数字コードが衝突した場合の自動リトライ
 peer.on("error", (err) => {
+    console.error("PeerJSエラー:", err);
     if (err.type === "unavailable-id") {
         location.reload();
-    } else {
-        console.error("PeerJSエラー:", err);
     }
 });
 
-// 4. 相手から接続されたときの処理（ホスト側）
+// 4. 相手から接続されたとき（ホスト側）
 peer.on("connection", (connection) => {
+    console.log("相手からの接続を検知しました！");
     conn = connection;
     setupConnectionEvents();
 });
 
-// 5. 相手の数字6桁を入力して接続する処理（ゲスト側）
+// 5. 接続ボタンクリック処理（HTML末尾で読み込まれているため即座に取得可能）
 const connectBtn = document.getElementById("connect-btn");
+const targetInput = document.getElementById("target-peer-id");
+
 if (connectBtn) {
     connectBtn.addEventListener("click", () => {
-        const inputVal = document.getElementById("target-peer-id").value.trim();
-        if (!inputVal || inputVal.length !== 6 || isNaN(inputVal)) {
-            alert("半角数字6桁を入力してください");
+        console.log(">>> 接続ボタンがクリックされました！");
+
+        if (!targetInput) {
+            console.error("入力欄 (id='target-peer-id') がありません");
             return;
         }
 
-        // 接頭辞を補完して接続
+        const inputVal = targetInput.value.trim();
+        console.log("入力された値:", inputVal);
+
+        if (!inputVal || inputVal.length !== 6 || isNaN(inputVal)) {
+            alert("相手の半角数字6桁を入力してください");
+            return;
+        }
+
         const targetFullId = `bs-room-${inputVal}`;
+        console.log("接続開始:", targetFullId);
+
         conn = peer.connect(targetFullId);
         setupConnectionEvents();
     });
+} else {
+    console.error("connect-btn が見つかりません");
 }
 
 // 6. 接続確立後のイベント設定 & ハートビート監視
@@ -57,14 +71,14 @@ function setupConnectionEvents() {
     if (!conn) return;
 
     conn.on("open", () => {
+        console.log("P2P接続が完全に確立しました！");
         const statusEl = document.getElementById("connection-status");
         if (statusEl) {
             statusEl.textContent = "● 接続中";
             statusEl.style.color = "#4ade80";
         }
-        console.log("P2P接続が確立しました！");
 
-        // 15秒ごとに生存信号（PING）を送って通信経路を維持
+        // 15秒ごとの生存確認PING
         clearInterval(heartbeatInterval);
         heartbeatInterval = setInterval(() => {
             if (conn && conn.open) {
@@ -75,10 +89,8 @@ function setupConnectionEvents() {
 
     // 相手からデータを受信したとき
     conn.on("data", (data) => {
-        // 生存確認PINGは無視して読み捨てる
         if (data.type === "PING") return;
-
-        console.log("受信したデータ:", data);
+        console.log("受信データ:", data);
         handleIncomingData(data);
     });
 
@@ -92,7 +104,7 @@ function setupConnectionEvents() {
     });
 
     conn.on("error", (err) => {
-        console.error("P2Pエラー:", err);
+        console.error("接続エラー:", err);
     });
 }
 
@@ -106,11 +118,9 @@ function sendGameData(data) {
 // 相手から届いたデータに応じて相手フィールド（#opponent-field）を動かす関数
 function handleIncomingData(data) {
     switch (data.type) {
-        // カードの移動・召喚
         case "MOVE_CARD": {
             let cardEl = document.getElementById(`op-card-${data.cardId}`);
             
-            // 相手画面にまだないカードなら新しく作成
             if (!cardEl) {
                 cardEl = document.createElement("div");
                 cardEl.className = "game-card";
@@ -119,7 +129,6 @@ function handleIncomingData(data) {
                     cardEl.style.backgroundImage = `url(${data.image})`;
                 }
 
-                // 相手用コアカウンターバッジ
                 const overlay = document.createElement("div");
                 overlay.className = "card-core-overlay";
                 overlay.style.display = "flex";
@@ -133,7 +142,6 @@ function handleIncomingData(data) {
                 cardEl.appendChild(overlay);
             }
 
-            // 移動先の相手枠を特定
             let targetSlot = null;
             if (data.toSlot === "trash") {
                 targetSlot = document.getElementById("op-trash-slot");
@@ -145,27 +153,22 @@ function handleIncomingData(data) {
 
             if (targetSlot) {
                 targetSlot.appendChild(cardEl);
-            } else {
-                console.warn("移動先スロットが見つかりませんでした: ", data.toSlot);
             }
             break;
         }
 
-        // コア増減（リザーブ / トラッシュ）
         case "UPDATE_CORE": {
             const numEl = document.getElementById(`op-${data.target}-count`);
             if (numEl) numEl.textContent = data.count;
             break;
         }
 
-        // カード上のコア数変動
         case "UPDATE_CARD_CORE": {
             const coreNumEl = document.getElementById(`op-core-${data.cardId}`);
             if (coreNumEl) coreNumEl.textContent = data.count;
             break;
         }
 
-        // 疲労・回復の切り替え
         case "EXHAUST_CARD": {
             const cardEl = document.getElementById(`op-card-${data.cardId}`);
             if (cardEl) {
@@ -178,7 +181,6 @@ function handleIncomingData(data) {
             break;
         }
 
-        // ライフコアの増減
         case "UPDATE_LIFE": {
             const lifeEl = document.getElementById(`op-${data.lifeId}`);
             if (lifeEl) {
