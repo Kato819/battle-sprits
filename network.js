@@ -5,16 +5,33 @@ function generateShortCode() {
     return Math.floor(100000 + Math.random() * 900000).toString();
 }
 
-// 2. 6桁コードを付与してPeerインスタンスを初期化
+// 2. 6桁コードを付与し、STUN/TURNサーバーを指定してPeer初期化
 const myShortCode = generateShortCode();
-
 const peer = new Peer(`bs-room-${myShortCode}`, {
     config: {
         iceServers: [
+            // 直接通信用（Google STUN）
             { urls: "stun:stun.l.google.com:19302" },
             { urls: "stun:stun1.l.google.com:19302" },
-            { urls: "stun:stun2.l.google.com:19302" }
-        ]
+            
+            // ルーター・回線の壁を越えるための中継用（公開TURNサーバー）
+            {
+                urls: "turn:openrelay.metered.ca:80",
+                username: "openrelayproject",
+                credential: "openrelayproject"
+            },
+            {
+                urls: "turn:openrelay.metered.ca:443",
+                username: "openrelayproject",
+                credential: "openrelayproject"
+            },
+            {
+                urls: "turn:openrelay.metered.ca:443?transport=tcp",
+                username: "openrelayproject",
+                credential: "openrelayproject"
+            }
+        ],
+        iceCandidatePoolSize: 10
     }
 });
 
@@ -30,31 +47,41 @@ peer.on("open", (id) => {
     }
 });
 
-// 万が一同じ数字コードが衝突した場合の自動リトライ
+// エラーハンドリング
 peer.on("error", (err) => {
-    console.error("PeerJSエラー:", err);
+    console.error("Peer全体エラー:", err.type, err);
     if (err.type === "unavailable-id") {
         location.reload();
+    } else if (err.type === "peer-unavailable") {
+        alert("指定されたコードの相手が見つかりません。\n相手の画面が開いているか、番号が最新か確認してください。");
+        resetConnectButton();
     }
 });
 
 // 4. 相手から接続されたとき（ホスト側）
 peer.on("connection", (connection) => {
-    console.log("相手からの接続を検知しました！");
+    console.log("相手からの接続を検知しました！", connection.peer);
     conn = connection;
     setupConnectionEvents();
 });
 
-// 5. 接続ボタンクリック処理（HTML末尾で読み込まれているため即座に取得可能）
+// 5. 接続ボタン処理（ゲスト側）
 const connectBtn = document.getElementById("connect-btn");
 const targetInput = document.getElementById("target-peer-id");
+
+function resetConnectButton() {
+    if (connectBtn) {
+        connectBtn.disabled = false;
+        connectBtn.textContent = "接続";
+    }
+}
 
 if (connectBtn) {
     connectBtn.addEventListener("click", () => {
         console.log(">>> 接続ボタンがクリックされました！");
 
         if (!targetInput) {
-            console.error("入力欄 (id='target-peer-id') がありません");
+            console.error("入力欄 (id='target-peer-id') が見つかりません");
             return;
         }
 
@@ -66,31 +93,38 @@ if (connectBtn) {
             return;
         }
 
+        // 連打防止：1回押したら一時的に無効化
+        connectBtn.disabled = true;
+        connectBtn.textContent = "接続中...";
+
         const targetFullId = `bs-room-${inputVal}`;
         console.log("接続開始:", targetFullId);
 
-// 接続作成
         conn = peer.connect(targetFullId, {
-            reliable: true
+            reliable: true,
+            serialization: "json"
         });
 
-        // イベントリスナーを即座に登録
-        setupConnectionEvents();
-        
-        conn = peer.connect(targetFullId);
+        conn.on("error", (err) => {
+            console.error("接続エラー:", err);
+            resetConnectButton();
+        });
+
+        conn.on("close", () => {
+            resetConnectButton();
+        });
+
         setupConnectionEvents();
     });
-} else {
-    console.error("connect-btn が見つかりません");
 }
 
-// 6. 接続確立後のイベント設定 & ハートビート監視
+// 6. 接続確立後のイベント設定 & 状態監視
 function setupConnectionEvents() {
     if (!conn) return;
 
     console.log("コネクション監視をセットアップ中...", conn.peer);
 
-    // すでに開通済みの場合は即座に接続完了処理を行う
+    // 通信確立時の画面更新処理
     const markConnected = () => {
         console.log("★ P2Pデータ通信路が完全に開通しました！");
         const statusEl = document.getElementById("connection-status");
@@ -98,7 +132,9 @@ function setupConnectionEvents() {
             statusEl.textContent = "● 接続中";
             statusEl.style.color = "#4ade80";
         }
+        resetConnectButton();
 
+        // 15秒ごとの生存確認PING
         clearInterval(heartbeatInterval);
         heartbeatInterval = setInterval(() => {
             if (conn && conn.open) {
@@ -107,6 +143,7 @@ function setupConnectionEvents() {
         }, 15000);
     };
 
+    // すでに開通しているかチェック
     if (conn.open) {
         markConnected();
     } else {
@@ -123,20 +160,17 @@ function setupConnectionEvents() {
     });
 
     conn.on("close", () => {
-        console.warn("P2P接続が切断されました (close)");
+        console.warn("P2P接続が切断されました");
         clearInterval(heartbeatInterval);
         const statusEl = document.getElementById("connection-status");
         if (statusEl) {
             statusEl.textContent = "× 切断されました";
             statusEl.style.color = "#f87171";
         }
+        resetConnectButton();
     });
 
-    conn.on("error", (err) => {
-        console.error("コネクションエラー発生:", err);
-    });
-
-    // ブラウザ内部のWebRTC接続状態（ICE）を直接監視してログ出力
+    // WebRTCの内部経路状態（ICE）を直接監視
     if (conn.peerConnection) {
         conn.peerConnection.oniceconnectionstatechange = () => {
             const state = conn.peerConnection.iceConnectionState;
