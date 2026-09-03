@@ -50,6 +50,10 @@ function createCardElement(cardData) {
         e.stopPropagation();
     });
 
+    coreOverlay.addEventListener("dblclick", (e) => {
+        e.stopPropagation();
+    });
+
     const minusBtn = coreOverlay.querySelector(".btn-minus");
     const plusBtn = coreOverlay.querySelector(".btn-plus");
     const numEl = coreOverlay.querySelector(".card-core-num");
@@ -116,7 +120,13 @@ function createCardElement(cardData) {
     // ★ダブルクリックで疲労（横向き）/ 回復の切り替え
     cardEl.addEventListener("dblclick", (e) => {
         e.stopPropagation();
+
+        if (e.target.closest(".card-core-overlay")) {
+                    return;
+        }
+        
         cardEl.classList.toggle("is-exhausted");
+        
         // 通信相手に疲労状態を送信
         if (typeof sendGameData === "function") {
             sendGameData({
