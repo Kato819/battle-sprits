@@ -7,7 +7,17 @@ function generateShortCode() {
 
 // 2. 6桁コードを付与してPeerインスタンスを初期化
 const myShortCode = generateShortCode();
-const peer = new Peer(`bs-room-${myShortCode}`);
+
+const peer = new Peer(`bs-room-${myShortCode}`, {
+    config: {
+        iceServers: [
+            { urls: "stun:stun.l.google.com:19302" },
+            { urls: "stun:stun1.l.google.com:19302" },
+            { urls: "stun:stun2.l.google.com:19302" }
+        ]
+    }
+});
+
 let conn = null;
 let heartbeatInterval = null;
 
