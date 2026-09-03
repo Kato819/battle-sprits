@@ -69,6 +69,14 @@ if (connectBtn) {
         const targetFullId = `bs-room-${inputVal}`;
         console.log("接続開始:", targetFullId);
 
+// 接続作成
+        conn = peer.connect(targetFullId, {
+            reliable: true
+        });
+
+        // イベントリスナーを即座に登録
+        setupConnectionEvents();
+        
         conn = peer.connect(targetFullId);
         setupConnectionEvents();
     });
@@ -76,12 +84,13 @@ if (connectBtn) {
     console.error("connect-btn が見つかりません");
 }
 
-// 6. 接続確立後のイベント設定 & ハートビート監視
 function setupConnectionEvents() {
     if (!conn) return;
 
+    console.log("コネクション監視をセットアップ中...", conn.peer);
+
     conn.on("open", () => {
-        console.log("P2P接続が完全に確立しました！");
+        console.log("★ P2Pデータ通信路が完全に開通しました！ (open)");
         const statusEl = document.getElementById("connection-status");
         if (statusEl) {
             statusEl.textContent = "● 接続中";
@@ -97,7 +106,6 @@ function setupConnectionEvents() {
         }, 15000);
     });
 
-    // 相手からデータを受信したとき
     conn.on("data", (data) => {
         if (data.type === "PING") return;
         console.log("受信データ:", data);
@@ -105,6 +113,7 @@ function setupConnectionEvents() {
     });
 
     conn.on("close", () => {
+        console.warn("P2P接続が切断されました (close)");
         clearInterval(heartbeatInterval);
         const statusEl = document.getElementById("connection-status");
         if (statusEl) {
@@ -114,7 +123,7 @@ function setupConnectionEvents() {
     });
 
     conn.on("error", (err) => {
-        console.error("接続エラー:", err);
+        console.error("コネクションエラー発生:", err);
     });
 }
 
