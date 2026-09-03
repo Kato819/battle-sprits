@@ -1,3 +1,6 @@
+/* ============================================================
+   全体・リセット設定
+   ============================================================ */
 * {
     box-sizing: border-box;
     margin: 0;
@@ -5,270 +8,317 @@
 }
 
 body {
-    height: 150vh;
+    background-color: #0f172a;
+    color: #f8fafc;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    user-select: none;
+    -webkit-user-select: none;
+    overflow-x: hidden;
+}
+
+/* ============================================================
+   通信ステータスバー
+   ============================================================ */
+#network-bar {
+    position: sticky;
+    top: 0;
+    z-index: 500;
+    background: #0f172a;
+    padding: 10px 16px;
+    border-bottom: 2px solid #334155;
+    display: flex;
+    gap: 12px;
+    align-items: center;
+    font-size: 14px;
+}
+
+#network-bar input {
+    padding: 4px 8px;
+    border-radius: 4px;
+    border: 1px solid #64748b;
+    background: #1e293b;
+    color: #ffffff;
+}
+
+#network-bar button {
+    padding: 4px 12px;
+    background: #2563eb;
+    color: #ffffff;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    font-weight: bold;
+}
+
+#network-bar button:hover {
+    background: #1d4ed8;
+}
+
+/* ============================================================
+   ゲーム盤面コンテナ
+   ============================================================ */
+#board {
     display: flex;
     flex-direction: column;
-    background-color: #1e293b;
-    color: #f8fafc;
-    font-family: sans-serif;
+    align-items: center;
+    gap: 20px;
+    padding: 16px;
+    /* 手札固定バーと被らないよう下部に大きな余白を確保 */
+    padding-bottom: 150px;
 }
 
-#board > div {
-    margin-bottom: 50px;
-}
-
-#opponent-field {
-    height: 80vh;
-}
-
-.card-area {
-    width: 95%;
-    margin: 0 auto;
-    height: 50vh;
-    display: grid;
-    grid-template-columns: repeat(9, 118px);
-    justify-content: space-between;
-    row-gap: 30px;
-    align-content: center;
-}
-
-.single-card-area {
-    height: 172px;
-    width: 118px;
-    border: 2px solid #ffffff;
-}
-
-.core-area {
-    width: 95%;
-    margin: 0 auto;
+/* フィールド共通枠 */
+#opponent-field,
+#my-field {
     display: flex;
-    justify-content: space-between;
+    gap: 16px;
+    background: #1e293b;
+    padding: 14px;
+    border-radius: 12px;
+    border: 1px solid #334155;
 }
 
-.life-cores,
-.reserve-core,
-.trash-core {
-    height: 86px;
-    width: 118px;
-    border: 2px solid #ffffff;
+/* 相手側フィールドの視覚的区別 */
+#opponent-field {
+    border-color: #475569;
+    opacity: 0.95;
 }
 
-.life-cores {
+/* 2段グリッド配置 */
+.card-area {
     display: grid;
-    grid-template-columns: repeat(3, 25px); /* 1辺25px */
-    justify-content: space-around;
-    row-gap: 10px;
-    align-content: center;
+    grid-template-columns: repeat(9, 74px);
+    grid-template-rows: repeat(2, 104px);
+    gap: 8px;
 }
 
-.life-core {
-    aspect-ratio: 1; /* 正方形ベース */
-    background-color: #f1f1f1;
-    border: 2px solid #ffffff;
-    clip-path: polygon(50% 0%, 100% 25%, 100% 75%, 50% 100%, 0% 75%, 0% 25%);
-}
-
-/* 六角形コアの基本形 */
-.core {
-    width: 22px !important;
-    height: 22px !important;
-    aspect-ratio: 1;
-    background-color: #f1f1f1;
-    border: 2px solid #ffffff;
-    clip-path: polygon(50% 0%, 100% 25%, 100% 75%, 50% 100%, 0% 75%, 0% 25%);
-    flex-shrink: 0; /* flexbox内で押し潰されるのを防ぐ */
-}
-
-/* リザーブとトラッシュの長方形枠（横並びで両端にボタン配置） */
-.reserve-core,
-.trash-core {
+/* 単一カードスロット */
+.single-card-area {
+    width: 74px;
+    height: 104px;
+    border: 1px dashed #475569;
+    border-radius: 6px;
+    background-color: rgba(30, 41, 59, 0.7);
     display: flex;
     align-items: center;
-    justify-content: space-between;
-    padding: 0;
-    user-select: none;
-    box-sizing: border-box;
+    justify-content: center;
+    position: relative;
+    font-size: 11px;
+    color: #94a3b8;
 }
 
+/* トラッシュ枠 */
+.trash-area {
+    border-color: #ef4444;
+    color: #f87171;
+}
 
-/* 左右のマイナス・プラスボタン */
-.core-btn {
-    width: 28px;
+/* ============================================================
+   カード本体のスタイル
+   ============================================================ */
+.game-card {
+    width: 100%;
     height: 100%;
-    background-color: rgba(255, 255, 255, 0.08);
-    border: none;
-    color: #ffffff;
-    font-size: 18px;
+    border-radius: 5px;
+    background-size: cover;
+    background-position: center;
+    background-repeat: no-repeat;
+    position: relative;
+    cursor: pointer;
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.4);
+    transition: transform 0.15s ease, box-shadow 0.15s ease;
+}
+
+/* 選択されたカードの強調 */
+.game-card.is-selected {
+    outline: 3px solid #38bdf8;
+    box-shadow: 0 0 12px rgba(56, 189, 248, 0.8);
+    transform: scale(1.04);
+    z-index: 10;
+}
+
+/* 疲労状態（90度回転） */
+.game-card.is-exhausted {
+    transform: rotate(90deg);
+}
+
+/* 選択 ＋ 疲労の同時状態 */
+.game-card.is-selected.is-exhausted {
+    transform: rotate(90deg) scale(1.04);
+}
+
+/* ============================================================
+   カード上のコアカウンター
+   ============================================================ */
+.card-core-overlay {
+    position: absolute;
+    bottom: 2px;
+    left: 50%;
+    transform: translateX(-50%);
+    display: flex;
+    align-items: center;
+    gap: 3px;
+    background: rgba(15, 23, 42, 0.85);
+    padding: 2px 4px;
+    border-radius: 10px;
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    z-index: 5;
+}
+
+.card-core-btn {
+    width: 16px;
+    height: 16px;
+    line-height: 14px;
+    font-size: 11px;
     font-weight: bold;
+    color: #ffffff;
+    background: #334155;
+    border: none;
+    border-radius: 50%;
     cursor: pointer;
     display: flex;
     align-items: center;
     justify-content: center;
-    transition: background-color 0.15s ease;
 }
 
-.core-btn:hover {
-    background-color: rgba(255, 255, 255, 0.25);
+.card-core-btn:hover {
+    background: #475569;
 }
 
-.core-btn:active {
-    background-color: rgba(255, 255, 255, 0.4);
+.card-core-display {
+    display: flex;
+    align-items: center;
+    gap: 2px;
+    font-size: 11px;
+    font-weight: bold;
+    color: #38bdf8;
 }
 
-/* 中央の表示（六角形 × 数字） */
+/* ============================================================
+   コア・ライフエリア
+   ============================================================ */
+.core-area {
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    width: 140px;
+    padding: 4px;
+    background: rgba(15, 23, 42, 0.5);
+    border-radius: 8px;
+}
 
-.core-display {
+.life-cores {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 4px;
+    min-height: 28px;
+    padding: 4px;
+    background: rgba(0, 0, 0, 0.2);
+    border-radius: 6px;
+}
+
+.life-core,
+.core {
+    width: 14px;
+    height: 14px;
+    background: radial-gradient(circle at 30% 30%, #38bdf8, #0284c7);
+    border-radius: 50%;
+    box-shadow: 0 0 5px rgba(56, 189, 248, 0.8);
+    cursor: pointer;
+}
+
+/* ライフ減少時の透明化 */
+.life-core.is-transparent {
+    opacity: 0.15;
+    box-shadow: none;
+}
+
+.reserve-core,
+.trash-core {
     display: flex;
     align-items: center;
     justify-content: center;
     gap: 6px;
-    flex-grow: 1;
+    margin: 4px 0;
 }
 
-.core-cross {
-    font-size: 14px;
-    color: #94a3b8;
-}
-
-.core-num {
-    font-size: 22px;
-    font-weight: bold;
+.core-btn {
+    width: 22px;
+    height: 22px;
+    background: #334155;
     color: #ffffff;
-    min-width: 20px;
-    text-align: center;
-}
-
-/* リフレッシュボタンのスタイル */
-#refresh-btn {
-    width: 118px; /* トラッシュ枠と同じ幅 */
-    margin-top: 8px;
-    padding: 6px 0;
-    background-color: #3b82f6; /* 鮮やかな青 */
-    color: #ffffff;
-    border: 1px solid #60a5fa;
+    border: none;
     border-radius: 4px;
-    font-size: 13px;
+    cursor: pointer;
+    font-weight: bold;
+}
+
+.core-btn:hover {
+    background: #475569;
+}
+
+.core-display {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    font-weight: bold;
+    font-size: 14px;
+}
+
+#refresh-btn {
+    width: 100%;
+    padding: 6px;
+    background: #059669;
+    color: #ffffff;
+    border: none;
+    border-radius: 4px;
+    font-size: 12px;
     font-weight: bold;
     cursor: pointer;
-    user-select: none;
-    transition: background-color 0.15s, transform 0.05s;
-    display: block;
 }
 
 #refresh-btn:hover {
-    background-color: #2563eb;
+    background: #047857;
 }
 
-#refresh-btn:active {
-    background-color: #1d4ed8;
-    transform: scale(0.97); /* 押したときの凹み演出 */
-}
-
+/* ============================================================
+   ★ 手札エリア（画面最下部中央に完全固定）
+   ============================================================ */
 #my-hand {
+    position: fixed;
+    bottom: 12px;
+    left: 50%;
+    transform: translateX(-50%);
+    z-index: 1000;
+
     display: flex;
-    margin-left: 5%;
-}
-
-/* JS */
-
-/* 背景色だけを完全に透明にし、枠線は残す */
-.is-transparent {
-    background-color: transparent !important;
-}
-
-/* 相手フィールド全体を逆さにする */
-#opponent-field {
-    transform: rotate(180deg);
-    pointer-events: none; /* 相手のエリアを自分が誤クリックしないように保護 */
-    margin-bottom: 20px;
-}
-
-/* 相手の裏面デッキ */
-#op-deck-slot {
-    background-image: url("images/裏.jpeg");
-    background-size: cover;
-    background-position: center;
-}
-
-/* 相手のカードも同様に配置できるように設定 */
-#opponent-field .game-card {
-    position: relative !important;
-    width: 100%;
-    height: 100%;
-    border-radius: 4px;
-    background-size: cover;
-    background-position: center;
-}
-
-#trash-slot,
-#op-trash-slot {
-    position: relative !important;
-    display: flex;
+    justify-content: flex-start;
     align-items: center;
-    justify-content: center;
-    cursor: pointer;
-    overflow: visible;
+    gap: 10px;
+
+    /* フローティングドック風の背景 */
+    background: rgba(15, 23, 42, 0.92);
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+    padding: 10px 18px;
+    border: 2px solid #334155;
+    border-radius: 14px;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.7);
+
+    max-width: 95vw;
+    overflow-x: auto;
 }
 
-#trash-slot .game-card,
-#op-trash-slot .game-card {
-    position: absolute !important;
-    top: 0 !important;
-    left: 0 !important;
-    width: 100% !important;
-    height: 100% !important;
-    margin: 0 !important;
-    transform: none !important; /* 疲労の回転を解除 */
-    box-shadow: none !important;
-    pointer-events: none; /* 枠のクリック判定を邪魔しない */
+/* 手札スロット固有サイズ */
+#my-hand .single-card-area {
+    width: 74px;
+    height: 104px;
+    flex-shrink: 0;
+    transition: transform 0.15s ease;
 }
 
-/* ★トラッシュ枠の中ではコアカウンターを完全に非表示にする */
-#trash-slot .card-core-overlay,
-#op-trash-slot .card-core-overlay {
-    display: none !important;
-}
-
-#trash-slot .game-card:hover,
-#op-trash-slot .game-card:hover {
-    transform: none !important;
-    box-shadow: none !important;
-    z-index: 1 !important;
-}
-
-/* 相手フィールドの各枠の基準位置を固定 */
-#opponent-field .single-card-area {
-    position: relative !important;
-}
-
-/* 相手枠内のカードの基本サイズを100%に固定（暴走防止） */
-#opponent-field .game-card {
-    position: relative !important;
-    width: 100% !important;
-    height: 100% !important;
-    pointer-events: auto; /* マウスホバーを有効化 */
-}
-
-/* ★相手カードにカーソルを乗せた時の拡大処理（効果を読む用） */
-#opponent-field .game-card:hover:not(.no-zoom) {
-    /* 相手フィールドの180度反転を打ち消して正面を向けつつ、1.8倍に拡大 */
-    transform: rotate(180deg) scale(1.8) !important;
-    z-index: 2000 !important;
-    box-shadow: 0 10px 25px rgba(0, 0, 0, 0.8);
-    transition: transform 0.15s ease-out;
-}
-
-/* ★ホバー拡大時：通常・疲労問わず「まっすぐ正面向き」で1.8倍に拡大 */
-#opponent-field .game-card:hover:not(.no-zoom),
-#opponent-field .game-card.is-exhausted:hover:not(.no-zoom) {
-    /* 相手フィールドの180度反転を相殺して、自分から見て完全に真っ直ぐ縦向きにする */
-    transform: rotate(-180deg) scale(1.8) !important;
-    z-index: 2000 !important;
-    box-shadow: 0 10px 25px rgba(0, 0, 0, 0.8);
-    transition: transform 0.15s ease-out;
-}
-
-/* 拡大中のみコアカウンターを非表示にして効果テキストを見やすくする */
-#opponent-field .game-card:hover:not(.no-zoom) .card-core-overlay {
-    display: none !important;
+/* 手札枠にマウスを乗せた時に少し浮き上がらせる */
+#my-hand .single-card-area:hover {
+    transform: translateY(-8px);
+    z-index: 20;
 }
