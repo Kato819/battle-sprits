@@ -26,7 +26,7 @@
 
 /* マウスを乗せているカードをその場で拡大する */
 .game-card:hover:not(.no-zoom) {
-    transform: scale(1.8);
+    transform: scale(2.5);
     z-index: 1000;
     box-shadow: 0 10px 25px rgba(0, 0, 0, 0.7);
     transition: transform 0.15s ease-out;
@@ -159,6 +159,6 @@
 
 /* 疲労状態のカードをホバー拡大した時の指定（横向きのまま1.8倍に拡大） */
 .game-card.is-exhausted:hover:not(.no-zoom) {
-    transform: rotate(-90deg) scale(1.8);
+    transform: rotate(-90deg) scale(2.5);
     z-index: 1000;
 }
