@@ -26,7 +26,7 @@
 
 /* マウスを乗せているカードをその場で拡大する */
 .game-card:hover:not(.no-zoom) {
-    transform: scale(2.5);
+    transform: scale(2.3);
     z-index: 1000;
     box-shadow: 0 10px 25px rgba(0, 0, 0, 0.7);
     transition: transform 0.15s ease-out;
