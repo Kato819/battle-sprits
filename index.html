@@ -18,8 +18,8 @@
     </div>
     <!-- 1. ゲーム盤面（お互いに共有・見える場所） -->
     <div id="board">
-            <!-- 相手のフィールドエリア（反転表示） -->
-<!-- 相手のフィールドエリア -->
+        <!-- 相手のフィールドエリア（反転表示） -->
+        <div id="op-hand"></div>
         <div id="opponent-field">
             <div class="card-area">
                 <!-- 1段目（上段）：左端バースト 〜 右端デッキ -->
@@ -29,20 +29,16 @@
                 <div class="single-card-area" data-op-slot="3"></div>
                 <div class="single-card-area" data-op-slot="4"></div>
                 <div class="single-card-area" data-op-slot="5"></div>
-                <div class="single-card-area" data-op-slot="6"></div>
-                <div class="single-card-area" data-op-slot="7"></div>
                 <!-- 右上：デッキ -->
                 <div class="single-card-area" id="op-deck-slot"></div>
 
                 <!-- 2段目（下段）：〜 右端トラッシュ -->
+                <div style="visibility: hidden; width: 74px;"></div>
+                <div class="single-card-area" data-op-slot="6"></div>
+                <div class="single-card-area" data-op-slot="7"></div>
                 <div class="single-card-area" data-op-slot="8"></div>
                 <div class="single-card-area" data-op-slot="9"></div>
                 <div class="single-card-area" data-op-slot="10"></div>
-                <div class="single-card-area" data-op-slot="11"></div>
-                <div class="single-card-area" data-op-slot="12"></div>
-                <div class="single-card-area" data-op-slot="13"></div>
-                <div class="single-card-area" data-op-slot="14"></div>
-                <div class="single-card-area" data-op-slot="15"></div>
                 <!-- 右下：トラッシュ -->
                 <div class="single-card-area trash-area" id="op-trash-slot">
                     <span class="trash-text">トラッシュ</span>
@@ -92,19 +88,15 @@
                 <div class="single-card-area" data-my-slot="3"></div>
                 <div class="single-card-area" data-my-slot="4"></div>
                 <div class="single-card-area" data-my-slot="5"></div>
-                <div class="single-card-area" data-my-slot="6"></div>
-                <div class="single-card-area" data-my-slot="7"></div>
                 <div class="single-card-area" id="deck-slot"></div>
 
                 <!-- 2段目：8 〜 15 〜 右端トラッシュ -->
+                <div style="visibility: hidden; width: 74px;"></div>
+                <div class="single-card-area" data-my-slot="6"></div>
+                <div class="single-card-area" data-my-slot="7"></div>
                 <div class="single-card-area" data-my-slot="8"></div>
                 <div class="single-card-area" data-my-slot="9"></div>
                 <div class="single-card-area" data-my-slot="10"></div>
-                <div class="single-card-area" data-my-slot="11"></div>
-                <div class="single-card-area" data-my-slot="12"></div>
-                <div class="single-card-area" data-my-slot="13"></div>
-                <div class="single-card-area" data-my-slot="14"></div>
-                <div class="single-card-area" data-my-slot="15"></div>
                 <div class="single-card-area trash-area" id="trash-slot">
                     <span class="trash-text">トラッシュ</span>
                 </div>
@@ -142,7 +134,10 @@
                         </div>
                         <button type="button" class="core-btn btn-plus" data-target="trash">＋</button>
                     </div>
+                    <!-- 自陣の right-core の中（リフレッシュボタンの上） -->
+                    <button type="button" id="core-step-btn" style="width: 100%; padding: 4px; background: #0284c7; color: white; border: none; border-radius: 4px; font-size: 11px; font-weight: bold; cursor: pointer; margin-bottom: 4px;">コア+1</button>
                     <button type="button" id="refresh-btn">リフレッシュ</button>
+                    
                 </div>
             </div>
         </div>
