@@ -218,17 +218,26 @@ function handleIncomingData(data) {
 
             let targetSlot = null;
             if (data.toSlot === "trash") {
-                targetSlot = document.getElementById("op-trash-slot");
+                    targetSlot = document.getElementById("op-trash-slot");
             } else if (data.toSlot === "burst") {
-                targetSlot = document.getElementById("op-burst-slot");
+                    targetSlot = document.getElementById("op-burst-slot");
             } else {
                 targetSlot = document.querySelector(`#opponent-field [data-op-slot="${data.toSlot}"]`);
             }
 
             if (targetSlot) {
+                // 移動元のスロットを記憶
+                const oldSlot = cardEl.parentElement;
+                
                 targetSlot.appendChild(cardEl);
+
+                // ★相手の画面でもブレイヴ（重なり）表示を自動調整
+                if (typeof updateBraveClasses === "function") {
+                    if (oldSlot) updateBraveClasses(oldSlot);
+                    updateBraveClasses(targetSlot);
+                }
             }
-            break;
+                break;
         }
 
         case "UPDATE_CORE": {
@@ -262,6 +271,20 @@ function handleIncomingData(data) {
                     lifeEl.classList.add("is-transparent");
                 } else {
                     lifeEl.classList.remove("is-transparent");
+                }
+            }
+            break;
+        }
+        case "UPDATE_HAND_COUNT": {
+            const opHand = document.getElementById("op-hand");
+            if (opHand) {
+                // 一旦手札エリアを空にする
+                opHand.innerHTML = ""; 
+                // 送られてきた枚数分だけ裏向きカードを生成
+                for (let i = 0; i < data.count; i++) {
+                    const card = document.createElement("div");
+                    card.className = "op-hand-card";
+                    opHand.appendChild(card);
                 }
             }
             break;
