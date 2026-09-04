@@ -9,6 +9,12 @@
 <body>
     <!-- 通信接続バー -->
     <div id="network-bar" style="background: #0f172a; padding: 10px; border-bottom: 2px solid #334155; display: flex; gap: 12px; align-items: center; font-size: 14px;">
+        
+        <select id="deck-selector" style="padding: 4px 8px; border-radius: 4px; border: 1px solid #64748b; background: #1e293b; color: white;">
+            <option value="deck1">デッキ1を使用</option>
+            <option value="deck2">デッキ2を使用</option>
+        </select>
+
         <div>
             あなたのID: <strong id="my-peer-id" style="color: #38bdf8;">接続中...</strong>
         </div>
@@ -162,6 +168,7 @@
     <script src="https://unpkg.com/peerjs@1.5.4/dist/peerjs.min.js"></script>
     <script src="card-list.js"></script>
     <script src="deck1.js"></script>
+    <script src="deck2.js"></script>
     <script src="network.js"></script> <!-- ★追加 -->
     <script src="main.js"></script>
 </body>
