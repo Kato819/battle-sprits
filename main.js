@@ -39,13 +39,32 @@ function setTrashCount(num) {
 }
 
 // ============================================================
-// 1. ライフコアの操作と同期
+// 1. ライフコアの操作と同期 ＋ ★リザーブ連動
 // ============================================================
 for (let i = 1; i <= 6; i++) {
     const lifeEl = document.getElementById(`life${i}`);
     if (lifeEl) {
         lifeEl.addEventListener("click", () => {
-            lifeEl.classList.toggle("is-transparent");
+            const wasTransparent = lifeEl.classList.contains("is-transparent");
+            const currentReserve = getReserveCount();
+
+            if (!wasTransparent) {
+                // ① ダメージを受けた時（コアが消える）：リザーブのコアを＋1
+                lifeEl.classList.add("is-transparent");
+                setReserveCount(currentReserve + 1);
+            } else {
+                // ② 巻き戻しや回復の時（コアが戻る）：リザーブのコアを−1
+                if (currentReserve > 0) {
+                    lifeEl.classList.remove("is-transparent");
+                    setReserveCount(currentReserve - 1);
+                } else {
+                    alert("リザーブにコアがないため、ライフを戻せません（総コア数が狂います）");
+                    return; // 処理を中断
+                }
+            }
+
+            // 相手画面へ通信（ライフの見た目同期）
+            // ※リザーブの増減は setReserveCount() の中で自動的に送信されます
             if (typeof sendGameData === "function") {
                 sendGameData({
                     type: "UPDATE_LIFE",
@@ -200,9 +219,30 @@ function createCardElement(cardData) {
 }
 
 // ============================================================
-// 4. 山札の初期化とドロー処理
+// 4. 山札の初期化とドロー処理 ＋ ★デッキ切り替え機能
 // ============================================================
-let currentDeck = [...activeDeckData];
+
+// ★ここに共通関数をお引越し
+function createDeckFromRecipe(recipe, database) {
+    const deck = [];
+    let uniqueIdCounter = 1;
+
+    recipe.forEach(item => {
+        const baseCard = database[item.cardId];
+        if (!baseCard) return;
+
+        for (let i = 0; i < item.count; i++) {
+            deck.push({
+                ...baseCard,
+                id: `card-inst-${uniqueIdCounter++}`,
+                masterId: item.cardId
+            });
+        }
+    });
+    return deck;
+}
+
+let currentDeck = [];
 
 function shuffleDeck() {
     for (let i = currentDeck.length - 1; i > 0; i--) {
@@ -210,7 +250,31 @@ function shuffleDeck() {
         [currentDeck[i], currentDeck[j]] = [currentDeck[j], currentDeck[i]];
     }
 }
-shuffleDeck();
+
+// ★選択されたデッキを読み込んでシャッフルする関数
+function initDeck(deckId) {
+    const recipe = deckId === "deck1" ? deck1Recipe : deck2Recipe;
+    currentDeck = createDeckFromRecipe(recipe, CARD_DATABASE);
+    shuffleDeck();
+    
+    // 山札の画像を復活させる（空になっていた場合のため）
+    const deckSlot = document.getElementById("deck-slot");
+    if (deckSlot) deckSlot.style.backgroundImage = 'url("images/裏.jpeg")';
+    
+    console.log(`${deckId} をセットし、シャッフルしました（計 ${currentDeck.length} 枚）`);
+}
+
+// プルダウンを切り替えたらデッキを再セット
+const deckSelector = document.getElementById("deck-selector");
+if (deckSelector) {
+    deckSelector.addEventListener("change", (e) => {
+        initDeck(e.target.value);
+        alert("デッキを切り替えてシャッフルしました！\n※すでに手札や場に出ているカードはそのまま残ります。");
+    });
+}
+
+// 最初はデッキ1を読み込んでおく
+initDeck("deck1");
 
 function drawCard() {
     if (currentDeck.length === 0) {
@@ -240,7 +304,11 @@ function drawCard() {
         const deck = document.getElementById("deck-slot");
         if (deck) deck.style.backgroundImage = "none";
     }
-    syncHandCount();    
+
+    // 相手に手札の枚数を同期
+    if (typeof syncHandCount === "function") {
+        syncHandCount();
+    }
 }
 
 const deckSlot = document.querySelector("#my-field #deck-slot");
