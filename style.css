@@ -26,7 +26,7 @@ body {
     margin: 0 auto;
     height: 50vh;
     display: grid;
-    grid-template-columns: repeat(9, 118px);
+    grid-template-columns: repeat(7, 118px);
     justify-content: space-between;
     row-gap: 30px;
     align-content: center;
@@ -36,13 +36,16 @@ body {
     height: 172px;
     width: 118px;
     border: 2px solid #ffffff;
+    position: relative;
 }
+
 
 .core-area {
     width: 95%;
     margin: 0 auto;
     display: flex;
     justify-content: space-between;
+    position: relative;
 }
 
 .life-cores,
@@ -252,7 +255,7 @@ body {
 /* ★相手カードにカーソルを乗せた時の拡大処理（効果を読む用） */
 #opponent-field .game-card:hover:not(.no-zoom) {
     /* 相手フィールドの180度反転を打ち消して正面を向けつつ、1.8倍に拡大 */
-    transform: rotate(180deg) scale(1.8) !important;
+    transform: rotate(180deg) scale(2.3) !important;
     z-index: 2000 !important;
     box-shadow: 0 10px 25px rgba(0, 0, 0, 0.8);
     transition: transform 0.15s ease-out;
@@ -262,7 +265,7 @@ body {
 #opponent-field .game-card:hover:not(.no-zoom),
 #opponent-field .game-card.is-exhausted:hover:not(.no-zoom) {
     /* 相手フィールドの180度反転を相殺して、自分から見て完全に真っ直ぐ縦向きにする */
-    transform: rotate(-180deg) scale(1.8) !important;
+    transform: rotate(-180deg) scale(2.3) !important;
     z-index: 2000 !important;
     box-shadow: 0 10px 25px rgba(0, 0, 0, 0.8);
     transition: transform 0.15s ease-out;
@@ -271,4 +274,74 @@ body {
 /* 拡大中のみコアカウンターを非表示にして効果テキストを見やすくする */
 #opponent-field .game-card:hover:not(.no-zoom) .card-core-overlay {
     display: none !important;
+}
+
+/* ============================================================
+   ★ ブレイヴ（合体）時のポジション制御
+   ============================================================ */
+
+/* 親スピリット（常に最前面で中央） */
+.game-card.braved-base {
+    position: absolute !important;
+    top: 40px;
+    left: 0;
+    width: 100%;  /* ★絶対配置時に枠のサイズに合わせる */
+    height: 100%;
+    z-index: 1;
+    transform-origin: 50% 26.7% !important;
+}
+
+/* ブレイヴ1枚目（右に50%ずらす） */
+.game-card.braved-right {
+    position: absolute !important;
+    top: -40px;
+    left: 59px; /* ★枠幅118pxの半分に変更 */
+    width: 100%;
+    height: 100%;
+    z-index: 3;
+    transform-origin: 0% 73.3% !important;
+}
+
+/* ブレイヴ2枚目・サジット用（左に50%ずらす） */
+.game-card.braved-left {
+    position: absolute !important;
+    top: -40px;
+    left: -59px; /* ★枠幅118pxの半分に変更 */
+    width: 100%;
+    height: 100%;
+    z-index: 2;
+    transform-origin: 100% 73.3% !important;
+}
+
+/* 合体しているブレイヴのコアカウンターを非表示にする */
+.game-card.braved-right .card-core-overlay,
+.game-card.braved-left .card-core-overlay {
+    display: none !important;
+}
+
+
+/* ============================================================
+   ★ 相手の手札エリア（枚数確認用）
+   ============================================================ */
+#op-hand {
+    display: flex;
+    justify-content: center;
+    gap: 8px;
+    margin-top: 10px;
+    margin-bottom: 20px;
+    transform: scale(0.8);
+    transform-origin: top center; /* 上を基準に80%に縮小 */
+    min-height: 137px; /* 縮小後の高さを確保してレイアウト崩れを防ぐ */
+}
+
+/* 相手の手札（裏向き固定のダミーカード） */
+.op-hand-card {
+    width: 118px;
+    height: 172px;
+    background-image: url("images/裏.jpeg"); /* 裏面画像 */
+    background-size: cover;
+    background-position: center;
+    border-radius: 4px;
+    border: 2px solid #ffffff;
+    box-shadow: 0 4px 6px rgba(0,0,0,0.4);
 }
